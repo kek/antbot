@@ -30,7 +30,7 @@ ai.run do |ai|
           (all_blocked or !(orders[loc] and (orders[loc] > ai.turn_number - AVOID_TIME))) and
           not current_orders[loc] and
           not loc.ant?
-        orders[loc] = ai.turn_number
+        orders[loc] = ai.turn_number unless all_blocked
         current_orders[loc] = true
         ant.order dir
         break
