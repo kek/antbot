@@ -16,7 +16,7 @@ ai.run do |ai|
 
     scores = [:N, :E, :S, :W].map { |dir|
       dest = ant.square.neighbor(dir)
-      if !dest.land?
+      if !dest.land? or dest.ant?
         score = nil
       elsif history[dest]
         # Higher age is good
@@ -56,7 +56,7 @@ ai.run do |ai|
 
       dest = ant.square.neighbor(dir)
 
-      if !current_orders[dest] and !dest.ant?
+      if !current_orders[dest]
         ant.order dir
         current_orders[dest] = true
         history[dest] = ai.turn_number
