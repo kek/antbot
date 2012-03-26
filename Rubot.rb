@@ -3,6 +3,7 @@ require 'ants.rb'
 
 ai=AI.new
 history = {}
+visits = {}
 
 ai.setup do |ai|
   # your setup code here, if any
@@ -20,7 +21,14 @@ ai.run do |ai|
         score = nil
       elsif history[dest]
         # Higher age is good
-        score = ai.turn_number - history[dest]
+        age = ai.turn_number - history[dest]
+        score = age - (visits[dest] or 0) * ai.my_ants.length.to_f / 20
+
+        # if age < 5 and age > 2
+        #   score = score + 1000
+        # else
+        #   score = age
+        # end
       else
         # Untravelled is best choice
         score = 1001
@@ -44,22 +52,23 @@ ai.run do |ai|
       scores[x] <=> scores[y]
     }.reverse
 
-    $stderr.puts "Possible moves, in order:"
-    directions.each {|dir|
-      $stderr.puts "#{dir} - #{scores[dir]}"
-    }
+    # $stderr.puts "Possible moves, in order:"
+    # directions.each {|dir|
+    #   $stderr.puts "#{dir} - #{scores[dir]}"
+    # }
 
     if directions.length > 0
       dir = directions.first
 
-      $stderr.puts "ant #{i} going #{dir}"
-
       dest = ant.square.neighbor(dir)
+
+      $stderr.puts "ant #{i} going #{dir} with #{visits[dest] or 0} visits"
 
       if !current_orders[dest]
         ant.order dir
         current_orders[dest] = true
         history[dest] = ai.turn_number
+        visits[dest] = (visits[dest] or 0) + 1
       else
         $stderr.puts "Blocked"
       end
