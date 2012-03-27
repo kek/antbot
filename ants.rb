@@ -217,6 +217,8 @@ class AI
 
     @my_ants=[]
     @enemy_ants=[]
+    @foods=[]
+    @enemy_hills=[]
 
     until((rd=@stdin.gets.strip)=='go')
       _, type, row, col, owner = *rd.match(/(w|f|h|a|d) (\d+) (\d+)(?: (\d+)|)/)
@@ -228,8 +230,12 @@ class AI
         @map[row][col].water=true
       when 'f'
         @map[row][col].food=true
+        @foods.push [row,col]
       when 'h'
         @map[row][col].hill=owner
+        if owner != 0
+          @enemy_hills.push [row,col]
+        end
       when 'a'
         a=Ant.new true, owner, @map[row][col], self
         @map[row][col].ant = a
@@ -269,13 +275,65 @@ class AI
     end
   end
 
+  # Calculate the closest distance between two locations
+  def distance(loc1, loc2)
+    row1, col1 = loc1[0], loc1[1]
+    row2, col2 = loc2[0], loc2[1]
+    d_col = [(col1 - col2).abs, @cols - (col1 - col2).abs].min
+    d_row = [(row1 - row2).abs, @rows - (row1 - row2).abs].min
+    d_row + d_col
+  end
 
-
+  # Determine the 1 or 2 fastest (closest) directions to reach a location
+  def direction(loc1, loc2)
+    row1, col1 = loc1[0], loc1[1]
+    row2, col2 = loc2[0], loc2[1]
+    height2 = @rows / 2
+    width2 = @cols / 2
+    d = []
+    if row1 < row2
+      if row2 - row1 >= height2
+        d.push(:N)
+      end
+      if row2 - row1 <= height2
+        d.push(:S)
+      end
+    end
+    if row2 < row1
+      if row1 - row2 >= height2
+        d.push(:S)
+      end
+      if row1 - row2 <= height2
+        d.push(:N)
+      end
+    end
+    if col1 < col2
+      if col2 - col1 >= width2
+        d.push(:W)
+      end
+      if col2 - col1 <= width2
+        d.push(:E)
+      end
+    end
+    if col2 < col1
+      if col1 - col2 >= width2
+        d.push(:E)
+      end
+      if col1 - col2 <= width2
+        d.push(:W)
+      end
+    end
+    d
+  end
 
   # Returns an array of your alive ants on the gamefield.
   def my_ants; @my_ants; end
   # Returns an array of alive enemy ants on the gamefield.
   def enemy_ants; @enemy_ants; end
+
+  # Return an array of [row,col] for foods, hills etc
+  def foods; @foods; end
+  def enemy_hills; @enemy_hills; end
 
   # If row or col are greater than or equal map width/height, makes them fit the map.
   #
