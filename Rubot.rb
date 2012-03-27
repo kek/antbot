@@ -1,6 +1,10 @@
 $:.unshift File.dirname($0)
 require 'ants.rb'
 
+def log s
+  # $stderr.puts s
+end
+
 ai=AI.new
 history = {}
 visits = {}
@@ -13,7 +17,26 @@ ai.run do |ai|
   current_orders = {}
 
   ai.my_ants.each_with_index do |ant, i|
-    $stderr.puts "\nAnt #{i}:"
+
+    log "Distance between -1,0 and 0,5:"
+    log ai.distance([-1,0], [0,5])
+
+    log "Fastest route between 0,0 and 1,1:"
+    log ai.direction([0,0], [1,1])
+
+    log "\nAnt #{i}:"
+
+    close_foods = ai.foods.sort { |food|
+      ai.distance([ant.row, ant.col], [food[0], food[1]])
+    }.reject { |food|
+      ai.distance([ant.row, ant.col], [food[0], food[1]]) > ai.viewradius / 2
+    }
+
+    close_hills = ai.enemy_hills.sort { |hill|
+      ai.distance([ant.row, ant.col], [hill[0], hill[1]])
+    }.reject { |hill|
+      ai.distance([ant.row, ant.col], [hill[0], hill[1]]) > ai.viewradius
+    }
 
     scores = [:N, :E, :S, :W].map { |dir|
       dest = ant.square.neighbor(dir)
@@ -21,8 +44,7 @@ ai.run do |ai|
         score = nil
       elsif history[dest]
         # Higher age is good
-        age = ai.turn_number - history[dest]
-        score = age - (visits[dest] or 0) * ai.my_ants.length.to_f / 20
+        score = ai.turn_number - history[dest]
 
         # if age < 5 and age > 2
         #   score = score + 1000
@@ -33,7 +55,27 @@ ai.run do |ai|
         # Untravelled is best choice
         score = 1001
       end
-      $stderr.puts "ant #{i} - #{dir} - score #{score or 'nil'}" unless !score
+
+
+      if score
+
+        if close_hills.length > 0 and
+            ai.direction([ant.row, ant.col], close_hills[0]).member? dir
+          log "******************* HILL HUNT *************************"
+          score += 300
+        end
+
+        if close_foods.length > 0 and
+            ai.direction([ant.row, ant.col], close_foods[0]).member? dir
+          log "******************* FOOD HUNT *************************"
+          score += 300
+        end
+
+        score = score - (visits[dest] or 0) * ai.my_ants.length.to_f / 10
+
+        log "ant #{i} - #{dir} - score #{score or 'nil'}" unless !score
+      end
+
       { dir => score }
     }
 
@@ -41,9 +83,9 @@ ai.run do |ai|
       memo.merge obj
     }
 
-    # $stderr.puts "scores for ant #{i}:"
+    # log "scores for ant #{i}:"
     # scores.each_pair do |key, value|
-    #   $stderr.puts "direction #{key} - score #{value}"
+    #   log "direction #{key} - score #{value}"
     # end
 
     directions = [:N, :E, :S, :W].sort {|x| 0.5 <=> rand }.reject { |dir|
@@ -52,9 +94,9 @@ ai.run do |ai|
       scores[x] <=> scores[y]
     }.reverse
 
-    # $stderr.puts "Possible moves, in order:"
+    # log "Possible moves, in order:"
     # directions.each {|dir|
-    #   $stderr.puts "#{dir} - #{scores[dir]}"
+    #   log "#{dir} - #{scores[dir]}"
     # }
 
     if directions.length > 0
@@ -62,7 +104,7 @@ ai.run do |ai|
 
       dest = ant.square.neighbor(dir)
 
-      $stderr.puts "ant #{i} going #{dir} with #{visits[dest] or 0} visits"
+      log "ant #{i} going #{dir} with #{visits[dest] or 0} visits"
 
       if !current_orders[dest]
         ant.order dir
@@ -70,10 +112,10 @@ ai.run do |ai|
         history[dest] = ai.turn_number
         visits[dest] = (visits[dest] or 0) + 1
       else
-        $stderr.puts "Blocked"
+        log "Blocked"
       end
     else
-      $stderr.puts "No good move for ant #{i}"
+      log "No good move for ant #{i}"
     end
 
 
