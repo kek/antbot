@@ -29,13 +29,13 @@ ai.run do |ai|
     close_foods = ai.foods.sort { |food|
       ai.distance([ant.row, ant.col], [food[0], food[1]])
     }.reject { |food|
-      ai.distance([ant.row, ant.col], [food[0], food[1]]) > ai.viewradius / 2
+      ai.distance([ant.row, ant.col], [food[0], food[1]]) > ai.viewradius*2
     }
 
     close_hills = ai.enemy_hills.sort { |hill|
       ai.distance([ant.row, ant.col], [hill[0], hill[1]])
     }.reject { |hill|
-      ai.distance([ant.row, ant.col], [hill[0], hill[1]]) > ai.viewradius
+      ai.distance([ant.row, ant.col], [hill[0], hill[1]]) > ai.viewradius*2
     }
 
     scores = [:N, :E, :S, :W].map { |dir|
